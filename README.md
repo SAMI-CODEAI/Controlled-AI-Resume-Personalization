@@ -1,139 +1,99 @@
 # Controlled AI Resume Personalization Platform
 
-[![GitHub Release](https://img.shields.io/github/v/release/SAMI-CODEAI/Controlled-AI-Resume-Personalization?style=flat-square)](https://github.com/SAMI-CODEAI/Controlled-AI-Resume-Personalization)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![Powered by OpenAI](https://img.shields.io/badge/Powered%20by-OpenAI-412991?style=flat-square&logo=openai)](https://openai.com/)
+A production-ready, full-stack web application designed to generate job-specific resumes with AI-powered hallucination prevention and integrated LaTeX rendering.
 
-A production-ready, full-stack ecosystem designed to generate high-fidelity, job-specific resumes through **Controlled AI Personalization**. By bridging the gap between structured career data and generative AI, the platform ensures professional excellence without compromising integrity.
+## 🚀 Overview
 
----
+The **Controlled AI Resume Personalization Platform** empowers users to create highly tailored resumes for specific job descriptions. Unlike generic AI resume builders, this platform uses a **controlled generation engine** that strictly adheres to the user's verified career data, preventing the AI from "hallucinating" or inventing skills and experiences.
 
-## 🏗️ System Architecture
+## ✨ Key Features
 
-The platform utilizes a modern, decoupled architecture designed for high throughput and modularity.
+- **Secure Authentication**: Multi-user support with JWT-based security.
+- **Career Data Vault**: Structured storage for skills, projects, work experiences, and achievements.
+- **AI-Driven Personalization**: Automatic matching of career data to job descriptions using OpenAI's GPT models.
+- **Hallucination Prevention**: Proprietary logic ensures only verified user data is used in the generated resume.
+- **LaTeX Template Engine**: High-quality, professional resume templates rendered via LaTeX.
+- **Live PDF Preview**: Integrated PDF viewer for real-time visual feedback.
+- **Interactive LaTeX Editor**: Full control over the generated LaTeX source code via an embedded Monaco Editor.
+- **AI Refinement Chat**: Tweak and polish your resume through an interactive chat interface.
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Framework**: [Next.js (React)](https://nextjs.org/) - Selected for its robust routing, server-side rendering capabilities, and seamless developer experience.
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) - Provides a utility-first approach for rapid and consistent UI development.
+- **Language**: [TypeScript](https://www.typescriptlang.org/) - Ensures type safety and improves maintainability across the frontend codebase.
+
+### Backend
+- **Framework**: [FastAPI (Python)](https://fastapi.tiangolo.com/) - High-performance, asynchronous web framework for building APIs with Python 3.8+.
+- **ORM**: [SQLAlchemy](https://www.sqlalchemy.org/) - Flexible SQL toolkit and Object Relational Mapper.
+- **Security**: [Jose (JWT)](https://python-jose.readthedocs.io/) for secure token-based authentication.
+
+### AI & Infrastructure
+- **LLM**: [OpenAI API](https://openai.com/) - Powers the intelligent resume generation and refinement chat.
+- **Database**: [PostgreSQL](https://www.postgresql.org/) (Production) and [SQLite](https://www.sqlite.org/) (Development).
+- **Containerization**: [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/) - Ensures environment parity.
+
+## ⚙️ System Architecture
 
 ```mermaid
 graph TD
-    User((User))
-    
-    subgraph "Frontend (Next.js 14)"
-        UI[React UI / Tailwind]
-        Draft[Interactive LaTeX Editor]
-        Viewer[Live PDF Preview]
-    end
-    
-    subgraph "Backend Layer (FastAPI)"
-        API[REST API Endpoints]
-        Auth[JWT Authentication]
-        logic[Business & Matching Logic]
-    end
-    
-    subgraph "Service Layer"
-        AI[AI Matching & Personalization]
-        LaTeX[LaTeX Rendering Engine]
-    end
-    
-    subgraph "Data Layer"
-        DB[(PostgreSQL / SQLite)]
-    end
-    
-    User --> UI
-    UI --> API
-    API --> Auth
-    API --> logic
-    logic --> DB
-    logic --> AI
-    logic --> LaTeX
-    AI --> OpenAI(OpenAI SDK)
+    User([User]) <--> Frontend[Next.js Frontend]
+    Frontend <--> API[FastAPI Backend]
+    API <--> DB[(PostgreSQL / SQLite)]
+    API <--> AI[OpenAI API Service]
+    API <--> LaTeX[LaTeX Rendering Engine]
+    LaTeX --> PDF[Final Resume PDF]
 ```
 
----
+1.  **Frontend**: A responsive Next.js application that communicates with the backend via a RESTful API.
+2.  **API Layer**: FastAPI handles requests, authentication, and orchestrates the resume generation logic.
+3.  **Data Layer**: PostgreSQL stores user profiles, career data, and generated resume history.
+4.  **AI Service**: A dedicated service layer interacts with OpenAI to process job descriptions and personalize content.
+5.  **LaTeX Engine**: Converts structured resume data into professional PDF documents.
 
-## ⚡ Core Workflow: The "Controlled" Approach
-
-Unlike typical LLM wrappers, this platform employs a multi-stage pipeline to ensure every word in your resume is backed by verified data.
+## 🔄 Core Workflow
 
 ```mermaid
 sequenceDiagram
     participant U as User
     participant F as Frontend
     participant B as Backend
-    participant A as AI Service
+    participant A as OpenAI
     participant L as LaTeX Engine
 
-    U->>F: Upload Job Description & Select Template
-    F->>B: Trigger Resume Generation
-    B->>B: Retrieve Career Data Vault
-    B->>A: Match JD vs. Verified Experiences
-    Note over A: Intelligent Filtering & Hallucination Guard
-    A-->>B: Return Personalized Content
-    B->>L: Inject Content into LaTeX Template
-    L-->>B: Compile PDF
-    B-->>F: Stream PDF Data
-    F->>U: Display Live Preview & Editor
+    U->>F: Provide Job Description
+    F->>B: Request Personalized Resume
+    B->>B: Fetch Career Data from DB
+    B->>A: Match & Personalize Content
+    A-->>B: Return Targeted Content
+    B->>L: Generate LaTeX & Render PDF
+    L-->>B: Return PDF Document
+    B-->>F: Deliver Resume & Preview
+    F->>U: Display tailored Resume
 ```
 
----
+1.  **Profile Setup**: Users populate their "Career Data Vault" with detailed experiences, projects, and skills.
+2.  **Job Input**: The user provides a target Job Description (JD).
+3.  **Controlled Matching**: The platform's AI engine analyzes the JD and selects the most relevant items from the user's data vault.
+4.  **Content Personalization**: The AI rewrites the selected items to highlight the most relevant aspects for the specific job, while staying strictly within the bounds of the original data.
+5.  **Rendering**: The personalized content is injected into a chosen LaTeX template.
+6.  **Refinement**: The user reviews the generated PDF and can either manually edit the LaTeX or use the AI chat to request further refinements.
 
-## 🛡️ Hallucination Prevention & Integrity
+## 🛡️ Hallucination Prevention
 
-> [!IMPORTANT]
-> **Integrity Guarantee**: Our platform uses a **Closed-Loop Verification** system. The AI is only permitted to rephrase and emphasize *existing* data points. It is strictly prohibited from introducing generic skills or fabricated roles, even if they match the job description.
-
-| Mechanical Layer | Description | Purpose |
-| :--- | :--- | :--- |
-| **Data Vaulting** | All career history is stored in a structured, immutable format. | Source of Truth |
-| **Semantic Matching** | Vector-based analysis ensures AI only picks relevant *existing* skills. | Relevance Filtering |
-| **Prompt Constraining** | Strict system prompts enforce "No New Facts" policy. | Hallucination Guard |
-| **Comparison Layer** | (Post-process) Cross-checks generated text against original data. | Final Validation |
-
----
-
-## 🛠️ Technology Stack & Rationale
-
-| Component | Technology | Rationale |
-| :--- | :--- | :--- |
-| **Frontend** | **Next.js 14 (App Router)** | Performance (RSC), seamless hydration, and robust SEO capabilities. |
-| **Styling** | **Tailwind CSS** | Design consistency and the ability to implement complex themes like the "Anti-Gravity" aesthetic. |
-| **Backend** | **FastAPI** | Asynchronous execution for high-concurrency LLM calls and PDF rendering. |
-| **Database** | **PostgreSQL** | Relational integrity for complex career data (Work Experience → Achievements). |
-| **AI Client** | **OpenAI GPT-4o** | State-of-the-art reasoning for precise semantic matching and professional writing. |
-| **Editing** | **Monaco Editor** | The industry standard for syntax highlighting (LaTeX) and a premium developer feel. |
-
----
-
-## ✨ Features Spotlight
-
-### 📊 Career Data Vault
-Store your work history, projects, and skills twice. Verify them once. Reuse them infinitely for different job targets.
-
-### 🎨 Premium Aesthetics
-Designed with a "Floating/Anti-Gravity" medical aesthetic. Smooth transitions, glassmorphism, and subtle micro-animations provide an elite user experience.
-
-### ✍️ Integrated LaTeX Studio
-Advanced users can take full control. Edit the raw LaTeX source with real-time PDF synchronization.
-
----
+The platform implements a unique "source-of-truth" validation layer. Before any content is included in the final resume, the system verifies that the semantic meaning aligns with the user's original input. This prevents the AI from adding technologies or responsibilities that the user never actually performed.
 
 ## 🚀 Getting Started
 
-### 1. Environment Configuration
-Create a `.env` file in the root using the provided template:
-```bash
-cp .env.example .env
-```
-
-### 2. Launch with Docker
-```bash
-docker-compose up --build
-```
-
-### 3. Access the Platform
-- **Frontend**: `http://localhost:3000`
-- **Interactive API Docs**: `http://localhost:8000/docs`
+### Quick Start
+1.  Clone the repository.
+2.  Configure `.env` files in both `frontend` and `backend` using `.env.example`.
+3.  Run the application using Docker:
+    ```bash
+    docker-compose up --build
+    ```
+4.  Access the frontend at `http://localhost:3000` and the API docs at `http://localhost:8000/docs`.
 
 ---
-> [!TIP]
-> To run without Docker, ensure you have a local LaTeX distribution installed (e.g., TeX Live or MiKTeX) for resume rendering.
-
-Developed with precision by the **Controlled AI Team**.
+Developed with ❤️ by the Controlled AI Team.
