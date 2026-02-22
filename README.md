@@ -1,4 +1,6 @@
-# Controlled AI Resume Personalization Platform
+# 🚀 Controlled AI Resume Personalization Platform
+
+**A production-ready platform to generate job-specific resumes using AI with strict hallucination prevention.**
 
 A production-ready, full-stack web application designed to generate job-specific resumes with AI-powered hallucination prevention and integrated LaTeX rendering.
 
