@@ -25,6 +25,16 @@ const createCrudRouter = (Model) => {
         }
     });
 
+    router.get('/:id', async (req, res) => {
+        try {
+            const item = await Model.findOne({ _id: req.params.id, user_id: req.user._id });
+            if (!item) return res.status(404).json({ detail: 'Item not found' });
+            res.json({ ...item.toObject(), id: item._id.toString() });
+        } catch (err) {
+            res.status(400).json({ detail: err.message });
+        }
+    });
+
     router.put('/:id', async (req, res) => {
         try {
             const item = await Model.findOneAndUpdate(

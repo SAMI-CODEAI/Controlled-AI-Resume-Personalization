@@ -39,6 +39,10 @@ async function request<T>(
         headers['Authorization'] = `Bearer ${token}`;
     }
 
+    if (endpoint.startsWith('/api/') && !endpoint.startsWith('/api/v1/')) {
+        endpoint = endpoint.replace('/api/', '/api/v1/');
+    }
+
     const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
         headers,
