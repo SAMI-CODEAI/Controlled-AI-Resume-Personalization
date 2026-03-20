@@ -25,11 +25,36 @@ def _rate_limit_check():
     _request_timestamps.append(now)
 
 
-def get_openai_client() -> OpenAI:
-    """Get an OpenAI client instance."""
-    if not settings.OPENAI_API_KEY:
-        raise Exception("OPENAI_API_KEY is not configured")
-    return OpenAI(api_key=settings.OPENAI_API_KEY)
+def get_llm_active_provider() -> str:
+    """Determine if we are using 'openai' or 'ollama'."""
+    api_key = settings.OPENAI_API_KEY
+    if api_key and api_key.lower() != "ollama" and api_key.strip() != "":
+        return "openai"
+    return "ollama"
+
+
+def get_llm_client() -> OpenAI:
+    """Get an LLM client instance."""
+    provider = get_llm_active_provider()
+    if provider == "openai":
+        return OpenAI(api_key=settings.OPENAI_API_KEY)
+    else:
+        return OpenAI(
+            api_key="ollama",
+            base_url=settings.LLM_BASE_URL,
+        )
+
+
+def get_active_model() -> str:
+    """Get the model name for the active provider."""
+    provider = get_llm_active_provider()
+    if provider == "openai":
+        # Check if a specific OpenAI model is provided in settings, otherwise default
+        if settings.LLM_MODEL and not settings.LLM_MODEL.startswith("llama"):
+             return settings.LLM_MODEL
+        return "gpt-4o"
+    return settings.LLM_MODEL
+
 
 
 def call_llm(
@@ -54,10 +79,11 @@ def call_llm(
     """
     _rate_limit_check()
 
-    client = get_openai_client()
+    client = get_llm_client()
+    model = get_active_model()
 
     kwargs = {
-        "model": "gpt-4o",
+        "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -99,14 +125,15 @@ def call_llm_with_history(
     """
     _rate_limit_check()
 
-    client = get_openai_client()
+    client = get_llm_client()
+    model = get_active_model()
 
     full_messages = [{"role": "system", "content": system_prompt}]
     full_messages.extend(messages)
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model=model,
             messages=full_messages,
             temperature=temperature,
             max_tokens=max_tokens,

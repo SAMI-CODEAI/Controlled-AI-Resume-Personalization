@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         // Check for existing token on mount
         if (isAuthenticated()) {
-            api.get<User>('/api/auth/me')
+            api.get<User>('/api/v1/auth/me')
                 .then(setUser)
                 .catch(() => {
                     clearToken();
@@ -33,13 +33,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const login = async (email: string, password: string) => {
-        const response = await api.post<TokenResponse>('/api/auth/login', { email, password });
+        const response = await api.post<TokenResponse>('/api/v1/auth/login', { email, password });
         setToken(response.access_token);
         setUser(response.user);
     };
 
     const register = async (email: string, password: string, fullName: string) => {
-        const response = await api.post<TokenResponse>('/api/auth/register', {
+        const response = await api.post<TokenResponse>('/api/v1/auth/register', {
             email,
             password,
             full_name: fullName,
