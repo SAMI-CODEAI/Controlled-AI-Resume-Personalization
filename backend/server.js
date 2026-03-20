@@ -18,12 +18,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Enable CORS
-app.use(cors({
-    origin: process.env.BACKEND_CORS_ORIGINS ? process.env.BACKEND_CORS_ORIGINS.split(',') : '*',
-}));
+app.use(cors());
 
 // Mount routers
 app.use('/api/v1/auth', authRoutes);
+
+// Generic CRUD routers for the Data Vault
+const createCrudRouter = require('./routes/crudGenerator');
+const Skill = require('./models/Skill');
+const Experience = require('./models/Experience');
+const Project = require('./models/Project');
+const Achievement = require('./models/Achievement');
+
+app.use('/api/v1/skills', createCrudRouter(Skill));
+app.use('/api/v1/experiences', createCrudRouter(Experience));
+app.use('/api/v1/projects', createCrudRouter(Project));
+app.use('/api/v1/achievements', createCrudRouter(Achievement));
 
 app.get('/api/v1/health', (req, res) => {
     res.json({ status: 'healthy', database: 'mongodb connected' });

@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { protect } = require('../middleware/auth');
 
 const generateToken = (id) => {
     return jwt.sign({ sub: id }, process.env.JWT_SECRET_KEY, {
@@ -31,10 +32,15 @@ router.post('/register', async (req, res) => {
 
         if (user) {
             res.status(201).json({
-                id: user._id,
-                email: user.email,
-                full_name: user.full_name,
                 access_token: generateToken(user._id),
+                token_type: 'bearer',
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    full_name: user.full_name,
+                    is_active: true,
+                    created_at: user.createdAt || new Date()
+                }
             });
         } else {
             res.status(400).json({ detail: 'Invalid user data' });
@@ -45,16 +51,23 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
     try {
         // FastAPI OAuth2PasswordRequestForm uses 'username' field for email usually.
-        const user = await User.findOne({ email: username });
+        const user = await User.findOne({ email });
 
         if (user && (await bcrypt.compare(password, user.hashed_password))) {
             res.json({
                 access_token: generateToken(user._id),
                 token_type: 'bearer',
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    full_name: user.full_name,
+                    is_active: true,
+                    created_at: user.createdAt || new Date()
+                }
             });
         } else {
             res.status(401).json({ detail: 'Invalid credentials' });
@@ -62,6 +75,16 @@ router.post('/login', async (req, res) => {
     } catch (error) {
         res.status(500).json({ detail: error.message });
     }
+});
+
+router.get('/me', protect, async (req, res) => {
+    res.json({
+        id: req.user._id,
+        email: req.user.email,
+        full_name: req.user.full_name,
+        is_active: true,
+        created_at: req.user.createdAt || new Date()
+    });
 });
 
 module.exports = router;
