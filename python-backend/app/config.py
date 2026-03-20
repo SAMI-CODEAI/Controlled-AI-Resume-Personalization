@@ -12,8 +12,10 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_MINUTES: int = 1440
 
-    # OpenAI
+    # LLM Settings
     OPENAI_API_KEY: str = ""
+    LLM_BASE_URL: str = "http://localhost:11434/v1"
+    LLM_MODEL: str = "llama3"
 
     # Server
     BACKEND_HOST: str = "0.0.0.0"

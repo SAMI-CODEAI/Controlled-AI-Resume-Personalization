@@ -25,11 +25,12 @@ def _rate_limit_check():
     _request_timestamps.append(now)
 
 
-def get_openai_client() -> OpenAI:
-    """Get an OpenAI client instance."""
-    if not settings.OPENAI_API_KEY:
-        raise Exception("OPENAI_API_KEY is not configured")
-    return OpenAI(api_key=settings.OPENAI_API_KEY)
+def get_llm_client() -> OpenAI:
+    """Get an LLM client instance (supports OpenAI-compatible APIs like Ollama)."""
+    return OpenAI(
+        api_key=settings.OPENAI_API_KEY or "ollama",
+        base_url=settings.LLM_BASE_URL,
+    )
 
 
 def call_llm(
@@ -54,10 +55,10 @@ def call_llm(
     """
     _rate_limit_check()
 
-    client = get_openai_client()
+    client = get_llm_client()
 
     kwargs = {
-        "model": "gpt-4o",
+        "model": settings.LLM_MODEL,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -99,14 +100,14 @@ def call_llm_with_history(
     """
     _rate_limit_check()
 
-    client = get_openai_client()
+    client = get_llm_client()
 
     full_messages = [{"role": "system", "content": system_prompt}]
     full_messages.extend(messages)
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model=settings.LLM_MODEL,
             messages=full_messages,
             temperature=temperature,
             max_tokens=max_tokens,

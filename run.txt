@@ -1,0 +1,70 @@
+# 🚀 How to Run the Platform
+
+## 🐳 Option 1: Using Docker (Recommended)
+This is the easiest way to run the entire stack (Frontend, Backend, Database).
+
+1. Ensure you have Docker and Docker Compose installed.
+2. Clone the repository and navigate to the project root.
+3. Run the following command:
+   ```bash
+   docker-compose up --build
+   ```
+4. Access the applications:
+   - **Frontend**: http://localhost:3000
+   - **API Backend**: http://localhost:8000
+   - **API Docs**: http://localhost:8000/docs
+
+---
+
+## 💻 Option 2: Manual Setup (Local Development)
+
+### 1. Backend (Python FastAPI)
+1. Navigate to the `backend` folder:
+   ```bash
+   cd backend
+   ```
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   .\venv\Scripts\activate  # Windows
+   source venv/bin/activate  # Mac/Linux
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Ensure your `.env` file is configured (copy from `.env.example`).
+5. Start the backend:
+   ```bash
+   python main.py
+   # OR use the helper script on Windows:
+   .\start.bat
+   ```
+
+### 2. Frontend (Next.js)
+1. Open a new terminal and navigate to the `frontend` folder:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+4. Access the frontend at http://localhost:3000
+
+---
+
+## 🔑 Environment Configuration
+Make sure you have populated the `.env` files in both folders:
+
+**Backend (`backend/.env`):**
+- `DATABASE_URL` (e.g., `sqlite:///./resume_platform.db`)
+- `OPENAI_API_KEY` (Your OpenAI Key)
+- `SECRET_KEY` (JWT Signing Key)
+
+**Frontend (`frontend/.env`):**
+- `NEXT_PUBLIC_API_URL` (Default: `http://localhost:8000`)
