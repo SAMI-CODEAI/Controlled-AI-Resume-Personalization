@@ -104,6 +104,24 @@ graph TD
 
 ---
 
+## 🤖 Agentic Implementation
+
+The platform's intelligence is powered by a multi-agent system that utilizes a suite of specialized agentic tools to bridge the gap between AI-generated content and professional LaTeX typesetting.
+
+### 🧩 Agentic Tools
+- **LaTeX Sanitizer**: A precision regex tool designed to identify and strip Unicode control characters (C0/C1) that typically crash standard LaTeX compilers.
+- **Placeholder Parser**: An automated analysis tool that dynamically scans LaTeX templates to map user data components to specific document sections.
+- **Context Injector**: A logic layer that orchestrates the retrieval of "Career Data Vault" entities and injects them into the agent's high-context system prompt.
+- **PDFLaTeX Compiler**: A hardware-level tool accessed via Node.js `child_process` to perform real-time validation and PDF generation.
+
+### ⚙️ Orchestration & Collaboration
+The system uses a **State-Aware Orchestration** pattern to manage agent interactions:
+1.  **State Persistence**: All agent outputs and analysis (match scores, missing skills) are stored in MongoDB as a "Generated Resume" entity.
+2.  **Context Handover**: The **Refinement Agent** inherits the full state of the **Generation Agent**, allowing it to understand the rationale behind specific content choices during the interactive chat.
+3.  **Iterative Feedback Loop**: Agents collaborate with the user through a versioned history, where each chat message triggers a re-orchestration of the LaTeX source based on the previous "best" state.
+
+---
+
 ## 🛡️ Hallucination Prevention & Sanitization
 
 The platform implements several technical guardrails to ensure professional-grade output:

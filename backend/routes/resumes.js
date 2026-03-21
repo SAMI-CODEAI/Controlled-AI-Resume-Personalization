@@ -24,6 +24,7 @@ router.get('/', protect, async (req, res) => {
     }
 });
 
+
 // DELETE a resume
 router.delete('/:id', protect, async (req, res) => {
     try {
@@ -181,3 +182,11 @@ router.post('/generate', protect, async (req, res) => {
 });
 
 module.exports = router;
+
+
+
+
+
+
+
+
