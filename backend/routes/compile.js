@@ -39,8 +39,9 @@ router.post('/', protect, async (req, res) => {
         fs.writeFileSync(texFile, clean, 'utf-8');
 
         await new Promise((resolve, reject) => {
+            const pdflatexCmd = process.env.PDFLATEX_PATH || 'pdflatex';
             execFile(
-                'pdflatex',
+                pdflatexCmd,
                 [
                     '-interaction=nonstopmode',
                     '-halt-on-error',
