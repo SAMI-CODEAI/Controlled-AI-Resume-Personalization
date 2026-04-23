@@ -1,5 +1,8 @@
 """
-Chat Router for interactive AI resume refinement.
+Chat Router — powered by the LangGraph 2-agent refinement StateGraph.
+
+The Chat Refiner Agent proposes edits; the Chat Critic Agent validates them.
+If violations are found, a second refinement pass is automatically triggered.
 """
 import json
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,7 +14,7 @@ from app.models.skill import Skill
 from app.models.generated_resume import GeneratedResume
 from app.schemas.schemas import ChatRequest, ChatResponse
 from app.auth.auth import get_current_user
-from app.services.chat_refiner import refine_resume
+from app.agents import get_chat_graph
 
 router = APIRouter()
 
@@ -24,9 +27,12 @@ def refine(
 ):
     """
     Refine a generated resume through interactive chat.
-    All modifications are validated against the user's skill database.
+
+    Agents:
+      1. Chat Refiner Agent — proposes edits (honours authorized skill constraints)
+      2. Chat Critic Agent  — validates the proposed update against guardrails
+         → If violations found, Chat Refiner is automatically re-invoked (max 2 cycles)
     """
-    # Get the resume
     resume = db.query(GeneratedResume).filter(
         GeneratedResume.id == payload.resume_id,
         GeneratedResume.user_id == current_user.id,
@@ -34,24 +40,36 @@ def refine(
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    # Get user's authorized skills
     user_skills = db.query(Skill).filter(Skill.user_id == current_user.id).all()
     authorized_skills = [s.name for s in user_skills]
-
-    # Process refinement
     chat_history = [{"role": m.role, "content": m.content} for m in payload.history]
 
-    try:
-        reply, updated_latex, validation_passed, validation_errors = refine_resume(
-            message=payload.message,
-            current_latex=resume.latex_output,
-            authorized_skills=authorized_skills,
-            chat_history=chat_history,
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Refinement failed: {str(e)}")
+    # Build initial ChatGraphState
+    initial_state = {
+        "message": payload.message,
+        "current_latex": resume.latex_output,
+        "authorized_skills": authorized_skills,
+        "chat_history": chat_history,
+        "refinement_attempts": 0,
+    }
 
-    # If valid update, save the new version
+    try:
+        graph = get_chat_graph()
+        final_state = graph.invoke(initial_state)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Refinement agent pipeline failed: {str(e)}")
+
+    updated_latex = final_state.get("updated_latex")
+    validation_passed = final_state.get("validation_passed", True)
+    validation_errors = final_state.get("validation_errors", [])
+    reply = final_state.get("reply", "")
+    refinement_attempts = final_state.get("refinement_attempts", 1)
+
+    # Append cycle count to reply if multiple attempts were needed
+    if refinement_attempts > 1:
+        reply += f"\n\n_(Chat Critic triggered {refinement_attempts} refinement cycle(s) to ensure compliance.)_"
+
+    # Persist if valid update
     if updated_latex and validation_passed:
         resume.latex_output = updated_latex
         resume.version += 1
@@ -60,7 +78,7 @@ def refine(
 
     return ChatResponse(
         reply=reply,
-        updated_latex=updated_latex,
+        updated_latex=updated_latex if validation_passed else None,
         validation_passed=validation_passed,
         validation_errors=validation_errors,
     )

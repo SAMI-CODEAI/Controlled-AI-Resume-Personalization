@@ -1,109 +1,165 @@
 # 🚀 Controlled AI Resume Personalization Platform
+> **A FAANG-Grade Multi-Agent Orchestration System for High-Integrity Resume Engineering**
 
-> **A Multi-Agent Orchestration System for High-Integrity Resume Engineering**
+The **Controlled AI Resume Personalization Platform** is a sophisticated **Agentic System** that leverages **LangGraph** to solve structural fragility and the "hallucination problem" inherent in LLM-generated documents. 
 
-The **Controlled AI Resume Personalization Platform** is not just an AI resume builder—it is a sophisticated **Agentic System** designed to solve the structural "hallucination" problem in LLM-generated content. By implementing a multi-stage, autonomous orchestration layer, the platform ensures every bullet point is semantically anchored to verified career data while being stylistically optimized for specific Job Descriptions (JDs).
+By migrating from a traditional linear pipeline to a **cyclical, stateful graph architecture**, the platform autonomously prevents data invention through closed-loop self-healing, agent serialization, and strict guardrails. It actively corrects its own mistakes in real-time, matching skills, analyzing JDs, creating LaTeX code, and verifying output in an endless-loop state-machine until validation checks pass.
 
 ---
 
-## 🤖 Agentic Architecture & Orchestration
+## 🛠️ Why LangGraph?
 
-The core of the platform is a **7-Step Autonomous Pipeline** orchestrated by specialized Python agents. This system handles the heavy lifting of JD analysis, skill extraction, project ranking, and LaTeX synthesis with built-in programmatic gating.
+In traditional "Chain" workflows (like basic LangChain `SequentialChains` or naive `for`-loops), execution is strictly linear. If an LLM outputs syntactically invalid LaTeX or hallucinates a phantom skill, the pipeline either crashes or requires complex programmatic back-tracking.
 
-### 🏗️ The 7-Step Agentic Pipeline
+By adopting **LangGraph**, we transformed our architecture into a cyclical **State Machine**.
+- **Self-Healing Cyclical Edges**: We route errors backwards. If a Critic agent flags an issue, LangGraph routes state back to the `Repair Agent`, injecting the precise errors into the next LLM iteration.
+- **Stateful Memory**: Every step mutates a typed `ResumeGraphState` dictionary, giving any downstream agent comprehensive historical context (e.g. previous errors, score attempts, raw JSON extractions).
+- **Human-in-the-Loop Interrupts**: The state graph pauses during Human-Agent chat refinement, tracking internal history natively.
+- **Trace Observability**: Graph progression inherently captures latency, routing logic, execution traces, and agent states, which we expose explicitly through a dedicated trace API terminal on the frontend.
+
+---
+
+## 🤖 The Multi-Agent System Architecture
+
+The platform operates two primary `StateGraph` deployments. 
+
+### 1. The Generation Graph (8-Agent System)
+
+The heavy-lifting graph handles cold-start generation. It consists of 8 highly specialized agents orchestrated as nodes with deterministic and conditional edge transitions.
 
 ```mermaid
-flowchart TD
-    A([User Input: JD + Template]) --> B
+graph TD
+    %% Define styles
+    classDef llm fill:#4a148c,stroke:#fff,stroke-width:2px,color:#fff
+    classDef logic fill:#004d40,stroke:#fff,stroke-width:2px,color:#fff
+    classDef eval fill:#bf360c,stroke:#fff,stroke-width:2px,color:#fff
+    classDef exit fill:#37474f,stroke:#fff,stroke-width:2px,color:#fff
 
-    B["🔍 Step 1: JD Analyzer (Service Agent)\njd_analyzer.py\n\nExtracts: required_skills, keywords,\ndomain, seniority"]
+    subgraph "Phase 1: Analytical Pre-Processing"
+    A([JD Analyst Agent]):::llm --> B([Skill Matcher Agent]):::logic
+    B --> C([Project Ranker Agent]):::logic
+    end
 
-    B --> C["🎯 Step 2: Skill Matcher (Context Agent)\nskill_matcher.py\n\nFuzzy matches JD requirements\nagainst USER PROFILE data.\nEnsures zero-hallucination entry."]
+    subgraph "Phase 2: Cyclical Synthesis & Self-Healing"
+    C --> D([Content Writer Agent]):::llm
+    
+    D --> E{LaTeX Critic Agent}:::eval
+    E -- "Errors" --> F([Repair Agent]):::llm
+    F -- "Attempt < 3" --> D
+    F -. "Attempt >= 3" .-> EX["Failed (Abort)"]:::exit
+    
+    E -- "Valid Syntax" --> G{Guardrail Critic Agent}:::eval
+    G -- "Violations" --> F
+    
+    G -- "Zero Hallucination" --> H{Reflection Agent}:::llm
+    H -- "Quality Score < 6" --> F
+    end
 
-    C --> D["� Step 3: Project Ranker (Scoring Agent)\nproject_ranker.py\n\nDetermines technical relevance\nusing weighted scoring:\nOverlap (50%) + Domain (30%) + Impact (20%)"]
-
-    D --> E["✍️ Step 4: Resume Generator (Writer Agent)\nresume_generator.py\n\nSynthesizes LaTeX section content\nmapped ONLY to user's verified facts."]
-
-    E --> F["🧩 Step 5: Template Injector (Assembly Agent)\nresume_generator.fill_template\n\nPerforms regex-safe injection into\nLaTeX placeholders: %%KEY%%, {{key}}, etc."]
-
-    F --> G{"🛡️ Step 6: Guardrail Validator (Judge Agent)\nguardrail_validator.py\n\nProgrammatically scans generated LaTeX\nfor unauthorized skill/tech tokens.\nRejects and retries on any violation."}
-
-    G -- "✅ Valid" --> H
-    G -- "❌ Violation" --> E
-
-    H["⚙️ Step 7: LaTeX Compiler (PDF Agent)\nlatex_compiler.py\n\nCompiles .tex to .pdf via Docker sandbox\nwith --no-shell-escape for security."]
-
-    H --> I[(Persistence Layer)]
+    subgraph "Phase 3: Compilation"
+    H -- "Quality Score >= 6" --> I([Compiler Agent]):::logic
+    I --> END([Final PDF Produced]):::exit
+    end
 ```
 
+#### Node Breakdown:
+1. **JD Analyst Agent**: Extracts required domain, seniority, and technical keywords from the job description.
+2. **Skill Matcher Agent**: Performs rigorous cross-checking of extracted JD skills against the user's *verified database profile*. Creates `matched_skills` vector, blocking hallucination at the source by restricting token supply.
+3. **Project Ranker Agent**: Selects the top 5 most relevant user projects by applying algorithmic relevance ranking against JD extraction targets.
+4. **Content Writer Agent**: Generates the raw JSON mapping of content to resume LaTeX placeholders. In 'Repair' mode, it receives injected error vectors to forcefully correct past iterations.
+5. **LaTeX Critic Agent**: Analyzes code structures parsing for unclosed LaTeX brackets `\begin{...}` without `\end{...}`, immediately kicking to repair if structurally compromised.
+6. **Guardrail Critic Agent**: Runs strict programmatic validation on the final LaTeX string to ensure absolutely **zero** unauthorized tools, APIs, or skills were generated by the Writer.
+7. **Repair Agent**: Aggregates output from both the `LaTeX Critic`, `Guardrail Critic`, and `Reflection` agents to construct a precise system prompt targeting specifically failed segments for re-evaluation. Re-triggers Phase 2.
+8. **Reflection Agent**: Plays the role of a "Senior Recruiter". Evaluates the 100% structurally valid compilation specifically for "Resume Impact Quality". Scores it 1-10. Scores <6 are automatically pushed to the Repair Agent.
+9. **Compiler Agent**: Takes validated Output state and securely executes an isolated `pdflatex` compilation.
+
 ---
 
-## 🛡️ Zero-Hallucination Guardrails
+### 2. The Interactive Chat Graph
 
-The platform implements a **Three-Layer Security Model** to prevent the AI from "inventing" experiences:
-
-1.  **Strict Prompt Engineering**: System prompts enforce "Absolute Rule" logic that prioritizes the `USER DATA` block over stylistic instructions.
-2.  **Autonomous Pre-Gating**: The **Skill Matcher** service filters job requirements *before* they reach the LLM, ensuring the generative agent never even "sees" skills that the user doesn't possess.
-3.  **Programmatic Post-Validation**: The **Guardrail Validator** acts as an internal judge, using precision regex to extract all technological mentions from the finished LaTeX and cross-referencing them against the user's verified Skill Vault.
-
----
-
-## 💬 Collaborative Refinement Agent
-
-Post-generation, the user interacts with a **State-Aware Refiner Agent**. This agent inherits the full context of the initial generation and maintains a history of changes while adhering to the same strict validation rules.
+Instead of single, stateless post-requests to an LLM, refine requests are powered by an interruptible cyclical graph.
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Refiner as Refinement Agent<br/>(chat_refiner.py)
-    participant Judge as Guardrail Judge<br/>(guardrail_validator.py)
+    autonumber
+    actor User
+    box LangGraph State
+    participant Graph State
+    end
+    participant Refiner as Chat Refiner Agent
+    participant Critic as Chat Critic Agent
 
-    User->>Refiner: "Emphasize my cloud architecture skills"
-    Note over Refiner: LLM analyzes history +<br/>authorized skill list
-    Refiner->>Refiner: Generates updated LaTeX
-    Refiner->>Judge: validate_resume(new_latex)
+    User->>Graph State: Prompt: "Make my frontend experience sound better"
+    Graph State->>Refiner: Send (Diff Target + Target Prompt)
+    Refiner-->>Graph State: Update State (Proposed LaTeX Modifications)
+    Graph State->>Critic: trigger Guardrail Evaluation
     
-    alt is_valid
-        Judge-->>Refiner: Success
-        Refiner-->>User: "Updated resume with verified cloud metrics."
-    else violation found
-        Judge-->>Refiner: Unauthorized Term Detected
-        Refiner-->>User: "I couldn't add 'AWS' as it's not in your verified profile."
+    alt Violations Found (e.g. Added unrealized Skill)
+        Critic-->>Graph State: Attach Violation Error Array
+        Note over Graph State, Refiner: Automatically Re-Routes
+        Graph State->>Refiner: Repair Execution with injected Violations
+    else Strict Rules Passed
+        Critic-->>Graph State: Approve Change Node
+        Graph State-->>User: Persisted Database Delta
     end
 ```
 
 ---
 
-## 🛠️ Integrated Tech Stack
+## 🔍 Agent Tool Registry (`tools.py`)
 
-The architecture is split between a **Node.js gateway** for high-concurrency CRUD and a **Python Agent Core** for complex AI logic and PDF rendering.
+Within our LangGraph implementation, agents do not execute random python code. To ensure deterministic functionality, backend capabilities are highly abstracted into explicitly typed functional wrappers annotated as agent tools.
 
-| Layer | System | Technology |
-|---|---|---|
-| **Experience Layer** | Next.js 14 | Monaco Editor (LaTeX), Live PDF Rendering |
-| **Gateway Layer** | Express.js | JWT Authentication, Mongoose (MongoDB Atlas) |
-| **Agentic Core** | FastAPI / Python | LangChain-style orchestration, SQLAlchemy |
-| **Logic Layer** | OpenAI GPT-4o | Specialized prompts for JSON-structured outputs |
-| **Rendering** | pdflatex | Docker-sandboxed LaTeX compilation |
+- `analyze_jd_tool(dict)` -> `JDAnalysis`
+- `match_skills_tool(list, list)` -> `SkillMatchResult`
+- `validate_guardrails_tool(string)` -> `(bool, list[str])`
+- *(and 5 others)*
+
+This creates a rigid interface boundary where Agents strictly deal with JSON-type mappings logic, passing execution natively backwards down the dependency tree.
 
 ---
+
+## 📈 Transparent Trace Observability (Agent Memory)
+
+Our platform exposes the *inner dialogue* of the agentic workflow to the end user.
+Because `LangGraph` relies on immutable dictionary modifications during state transitions, we maintain a rolling `agent_trace` ledger list in the `ResumeGraphState`.
+
+On completion, this log persists into `GeneratedResume.metadata_json`, providing the Frontend UI with real-time insight into:
+- Duration in `ms` for every single Agent Node.
+- The iteration sequence (e.g., indicating exactly how many times the `Repair Agent` took over).
+- Any caught structural violations or hallucinations (proving the system protected the user's resume).
+
+---
+
+## 🏢 Technology Stack
+
+| Component | Stack |
+| :--- | :--- |
+| **Agentic Framework** | `LangGraph`, `LangChain-Core` |
+| **Core LLM** | OpenAI `GPT-4o` (or local `Ollama` capabilities) |
+| **Backend Service** | `FastAPI` (Python 3.9), `SQLAlchemy`, `PostgreSQL` |
+| **Frontend UI** | `Next.js 14`, `React`, MERN ecosystem foundations. |
+| **Compilation Engine** | Isolated `pdflatex` rendering system |
 
 ## 🚀 Getting Started
 
 1.  **Clone the Repository**:
     ```bash
-    git clone <repo_url>
+    git clone https://github.com/your-username/Controlled-AI-Resume-Personalizer
     ```
 2.  **Configure Environment**:
-    - Build `.env` files in `backend/`, `frontend/`, and `python-backend/` (refer to `.env.example`).
-3.  **Run with Docker Compose**:
+    Initialize `.env` files in `frontend/` and `python-backend/`. Provide `OPENAI_API_KEY`.
+3.  **Ensure DB Backend**:
+    *For Local Execution:* Postgres instances, or use provided docker SQLite default configs in `.env`.
+4.  **Run Development Servers**:
+    Terminal 1 (Backend):
     ```bash
-    docker-compose up --build
+    cd python-backend
+    python -m pip install -r requirements.txt
+    python -m uvicorn app.main:app --port 8000
     ```
-4.  **Manual Start**:
-    - **Node Backend**: `npm run dev` in `/backend`
-    - **Python Agents**: `uvicorn app.main:app` in `/python-backend`
-    - **Frontend**: `npm run dev` in `/frontend`
-
----
-*Developed for high-integrity career engineering using autonomous agent orchestration.*
+    Terminal 2 (Frontend):
+    ```bash
+    cd frontend
+    npm install
+    npm run dev
+    ```
