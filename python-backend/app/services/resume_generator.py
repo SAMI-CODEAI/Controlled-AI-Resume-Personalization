@@ -30,7 +30,42 @@ You MUST return valid JSON with these keys (each value is a LaTeX string):
   "experiences": "LaTeX content for experience section"
 }
 
-IMPORTANT: Escape LaTeX special characters properly. Use \\\\textbf, \\\\item, etc."""
+IMPORTANT: Escape LaTeX special characters properly. Use \\\\textbf, \\\\item, etc. 
+You MUST close every environment you open (e.g., if you use \\\\begin{itemize}, you MUST end it with \\\\end{itemize}). Ensure nested environments are also balanced."""
+
+
+def validate_latex_structure(latex_text: str) -> List[str]:
+    """
+    Checks for unbalanced LaTeX environments (\begin{...} vs \end{...}).
+    Returns a list of error messages.
+    """
+    import re
+    errors = []
+    stack = []
+    
+    # Find all \begin{env} and \end{env} tags
+    pattern = re.compile(r"\\(begin|end)\{([^}]+)\}")
+    matches = pattern.finditer(latex_text)
+    
+    for match in matches:
+        tag_type = match.group(1)
+        env_name = match.group(2)
+        
+        if tag_type == "begin":
+            stack.append((env_name, match.start()))
+        else:
+            if not stack:
+                errors.append(f"Found \\end{{{env_name}}} without matching \\begin")
+            else:
+                last_begin, _ = stack.pop()
+                if last_begin != env_name:
+                    errors.append(f"Environment mismatch: \\begin{{{last_begin}}} ended by \\end{{{env_name}}}")
+    
+    while stack:
+        env_name, _ = stack.pop()
+        errors.append(f"Environment \\begin{{{env_name}}} is never closed with \\end{{{env_name}}}")
+        
+    return errors
 
 
 def generate_resume_content(
@@ -102,6 +137,19 @@ Generate LaTeX content for each placeholder. Remember: use ONLY the data above, 
         for key in ["summary", "skills", "projects", "experiences"]:
             if key not in content:
                 content[key] = ""
+            
+            # Structural validation
+            struct_errors = validate_latex_structure(content[key])
+            if struct_errors:
+                logger.warning(f"LaTeX structural errors in section '{key}': {struct_errors}")
+                # We could attempt a basic fix here, but for now, we'll let it be and rely 
+                # on the retry logic in the router if compilation fails.
+                # Or we can append missing tags if we're feeling brave.
+                for err in struct_errors:
+                    if "never closed" in err:
+                        env = err.split("\\begin{")[1].split("}")[0]
+                        content[key] += f"\n\\end{{{env}}}"
+
         return content
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse resume generation response: {e}")

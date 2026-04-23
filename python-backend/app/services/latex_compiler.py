@@ -14,6 +14,28 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
+def _extract_latex_error(log_path: str) -> str:
+    """Extract the most relevant error message from the LaTeX log file."""
+    if not os.path.exists(log_path):
+        return ""
+    try:
+        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+            lines = f.readlines()
+            # Look for lines starting with '!' (standard LaTeX errors)
+            # and collect the context
+            errors = []
+            for i, line in enumerate(lines):
+                if line.startswith("!"):
+                    errors.append(line.strip())
+                    # Grab next 2 lines for context if they exist
+                    if i + 1 < len(lines): errors.append(lines[i+1].strip())
+                    if i + 2 < len(lines): errors.append(lines[i+2].strip())
+                    break # Usually the first fatal error is most important
+            return "\n".join(errors) if errors else "See log for details."
+    except Exception as e:
+        return f"Error reading log: {str(e)}"
+
+
 def compile_latex(latex_content: str) -> str:
     """
     Compile LaTeX content to PDF.
@@ -87,7 +109,9 @@ def _compile_with_docker(tex_filepath: str, output_dir: str, job_id: str) -> str
             logger.info(f"Docker LaTeX compilation successful: {pdf_path}")
             return pdf_path
 
-        logger.warning(f"Docker compilation did not produce PDF. stderr: {result.stderr[:500]}")
+        log_path = os.path.join(output_dir, f"{job_id}.log")
+        error_msg = _extract_latex_error(log_path)
+        logger.warning(f"Docker compilation did not produce PDF. Error: {error_msg}")
         return ""
 
     except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError) as e:
@@ -123,8 +147,9 @@ def _compile_locally(tex_filepath: str, output_dir: str, job_id: str) -> str:
             logger.info(f"Local LaTeX compilation successful: {pdf_path}")
             return pdf_path
 
-        logger.error(f"Local compilation failed. stdout: {result.stdout[:500]}")
-        # Return tex file as fallback
+        log_path = os.path.join(output_dir, f"{job_id}.log")
+        error_msg = _extract_latex_error(log_path)
+        logger.error(f"Local compilation failed. Error: {error_msg}")
         return tex_filepath
 
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
