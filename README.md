@@ -1,164 +1,109 @@
 # 🚀 Controlled AI Resume Personalization Platform
 
-**A MERN platform for generating job-specific resumes using AI with a strict zero-hallucination guarantee.**
+> **A Multi-Agent Orchestration System for High-Integrity Resume Engineering**
+
+The **Controlled AI Resume Personalization Platform** is not just an AI resume builder—it is a sophisticated **Agentic System** designed to solve the structural "hallucination" problem in LLM-generated content. By implementing a multi-stage, autonomous orchestration layer, the platform ensures every bullet point is semantically anchored to verified career data while being stylistically optimized for specific Job Descriptions (JDs).
 
 ---
 
-## 🚀 Overview
+## 🤖 Agentic Architecture & Orchestration
 
-The **Controlled AI Resume Personalization Platform** is a highly engineered solution designed to solve the "hallucination" problem in AI-generated resumes. By implementing a **Source-of-Truth Orchestration Layer**, the platform ensures that every bullet point, skill, and achievement is semantically anchored to the user's verified career data, while being stylistically optimized for specific Job Descriptions (JDs).
+The core of the platform is a **7-Step Autonomous Pipeline** orchestrated by specialized Python agents. This system handles the heavy lifting of JD analysis, skill extraction, project ranking, and LaTeX synthesis with built-in programmatic gating.
 
----
-
-## 🛠️ MERN Stack Implementation
-
-This platform is built on the **MERN (MongoDB, Express, React, Node)** stack, with a focus on asynchronous orchestration and type-safe data handling.
-
-### 🍃 MongoDB (Persistence Layer)
-- **Career Data Vault**: Stores structured, multi-dimensional data across several entities (Skills, Experiences, Projects, Achievements).
-- **Generated Resumes**: Implements versioning for LaTeX documents, allowing users to track refinements over time.
-- **Mongoose ODM**: Handles schema validation and provides a robust interface for data orchestration.
-
-### 🚂 Express.js (Orchestration Layer)
-- **RESTful API**: Clean separation of concerns across authentication, career data management, and AI services.
-- **Middleware Architecture**: Implements JWT-based route protection, global error handling, and file upload processing (Multer).
-- **Zod Validation**: Ensures strict input validation at the API boundary.
-
-### ⚛️ React & Next.js (Experience Layer)
-- **Next.js 14**: Leverages App Router and Server Components for optimal performance and SEO.
-- **Monaco Editor**: Integrated Microsoft Monaco (VS Code core) for real-time, syntax-highlighted LaTeX source editing.
-- **Live PDF Rendering**: Uses `react-pdf` and `pdfjs-dist` for high-fidelity browser-side PDF previews.
-
-### 🟢 Node.js (Runtime Layer)
-- **AI Service Integration**: Manages complex streams and JSON orchestration with OpenAI's GPT-4o models.
-- **Async Orchestration**: Handles multiple database lookups and AI completions concurrently to minimize latency.
-
----
-
-## 🤖 AI Agent Orchestration
-
-The platform employs specialized AI Agents to handle the heavy lifting of resume personalization and refinement.
-
-### 1. Resume Personalization Agent
-- **Role**: Professional Resume Writer & Career Coach.
-- **Logic**: 
-    - **Extraction**: Dynamically parses the target LaTeX template for placeholders (e.g., `%%SKILLS%%`).
-    - **Matching**: Analyzes the JD to select the most relevant items from the user's Career Data Vault.
-    - **Personalization**: Rewrites content to align with JD keywords while strictly adhering to a **Zero-Hallucination Policy**.
-- **Source-of-Truth Enforcement**: The system prompt enforces that no new technology or experience can be created if it doesn't exist in the verified user data.
-
-### 2. Refinement Agent
-- **Role**: Expert AI Assistant.
-- **Logic**: Operates on a feedback loop via an interactive chat interface.
-- **Capability**: Can interpret natural language requests (e.g., "Make my project description more impact-oriented") and re-generate the underlying LaTeX source code in real-time.
-
----
-
-## ⚙️ System Architecture & Workflows
-
-### 🏗️ Technical Architecture
+### 🏗️ The 7-Step Agentic Pipeline
 
 ```mermaid
-graph TD
-    subgraph Client
-        User([User]) <--> Web[Next.js Frontend]
-        Web <--> Monaco[Monaco Editor]
-        Web <--> PDFView[PDF Previewer]
-    end
-    subgraph Backend_Services [Backend Services]
-        Web <--> API[Express.js Node Backend]
-        API <--> LLM[OpenAI GPT-4o Service]
-        API <--> LaTeX[LaTeX Rendering Engine]
-    end
-    subgraph Data_Layer [Data Layer]
-        API <--> DB[(MongoDB Atlas)]
-    end
-```
+flowchart TD
+    A([User Input: JD + Template]) --> B
 
-### 📊 Entity Relationship Diagram (ERD)
+    B["🔍 Step 1: JD Analyzer (Service Agent)\njd_analyzer.py\n\nExtracts: required_skills, keywords,\ndomain, seniority"]
 
-```mermaid
-erDiagram
-    USER ||--o{ EXPERIENCE : "has"
-    USER ||--o{ PROJECT : "has"
-    USER ||--o{ SKILL : "has"
-    USER ||--o{ ACHIEVEMENT : "has"
-    USER ||--o{ GENERATED_RESUME : "generates"
-    GENERATED_RESUME }o--|| RESUME_TEMPLATE : "uses"
-```
+    B --> C["🎯 Step 2: Skill Matcher (Context Agent)\nskill_matcher.py\n\nFuzzy matches JD requirements\nagainst USER PROFILE data.\nEnsures zero-hallucination entry."]
 
-### 🔄 Resume Generation Workflow
+    C --> D["� Step 3: Project Ranker (Scoring Agent)\nproject_ranker.py\n\nDetermines technical relevance\nusing weighted scoring:\nOverlap (50%) + Domain (30%) + Impact (20%)"]
 
-```mermaid
-graph TD
-    JD[Job Description Input] --> Agent[AI Generation Agent]
-    Vault[(Career Data Vault)] --> Agent
-    Template[LaTeX Template] --> Agent
-    Agent --> Matcher{Match & Personalize}
-    Matcher --> Valid[Source-of-Truth Validation]
-    Valid --> XML[JSON-Section Mapping]
-    XML --> LaTeX[LaTeX Sanitization]
-    LaTeX --> DB[(Save to MongoDB)]
-    DB --> PDF[Live PDF Rendering]
+    D --> E["✍️ Step 4: Resume Generator (Writer Agent)\nresume_generator.py\n\nSynthesizes LaTeX section content\nmapped ONLY to user's verified facts."]
+
+    E --> F["🧩 Step 5: Template Injector (Assembly Agent)\nresume_generator.fill_template\n\nPerforms regex-safe injection into\nLaTeX placeholders: %%KEY%%, {{key}}, etc."]
+
+    F --> G{"🛡️ Step 6: Guardrail Validator (Judge Agent)\nguardrail_validator.py\n\nProgrammatically scans generated LaTeX\nfor unauthorized skill/tech tokens.\nRejects and retries on any violation."}
+
+    G -- "✅ Valid" --> H
+    G -- "❌ Violation" --> E
+
+    H["⚙️ Step 7: LaTeX Compiler (PDF Agent)\nlatex_compiler.py\n\nCompiles .tex to .pdf via Docker sandbox\nwith --no-shell-escape for security."]
+
+    H --> I[(Persistence Layer)]
 ```
 
 ---
 
-## 🤖 Agentic Implementation
+## 🛡️ Zero-Hallucination Guardrails
 
-The platform's intelligence is powered by a multi-agent system that utilizes a suite of specialized agentic tools to bridge the gap between AI-generated content and professional LaTeX typesetting.
+The platform implements a **Three-Layer Security Model** to prevent the AI from "inventing" experiences:
 
-### 🧩 Agentic Tools
-- **LaTeX Sanitizer**: A precision regex tool designed to identify and strip Unicode control characters (C0/C1) that typically crash standard LaTeX compilers.
-- **Placeholder Parser**: An automated analysis tool that dynamically scans LaTeX templates to map user data components to specific document sections.
-- **Context Injector**: A logic layer that orchestrates the retrieval of "Career Data Vault" entities and injects them into the agent's high-context system prompt.
-- **PDFLaTeX Compiler**: A hardware-level tool accessed via Node.js `child_process` to perform real-time validation and PDF generation.
-
-### ⚙️ Orchestration & Collaboration
-The system uses a **State-Aware Orchestration** pattern to manage agent interactions:
-1.  **State Persistence**: All agent outputs and analysis (match scores, missing skills) are stored in MongoDB as a "Generated Resume" entity.
-2.  **Context Handover**: The **Refinement Agent** inherits the full state of the **Generation Agent**, allowing it to understand the rationale behind specific content choices during the interactive chat.
-3.  **Iterative Feedback Loop**: Agents collaborate with the user through a versioned history, where each chat message triggers a re-orchestration of the LaTeX source based on the previous "best" state.
+1.  **Strict Prompt Engineering**: System prompts enforce "Absolute Rule" logic that prioritizes the `USER DATA` block over stylistic instructions.
+2.  **Autonomous Pre-Gating**: The **Skill Matcher** service filters job requirements *before* they reach the LLM, ensuring the generative agent never even "sees" skills that the user doesn't possess.
+3.  **Programmatic Post-Validation**: The **Guardrail Validator** acts as an internal judge, using precision regex to extract all technological mentions from the finished LaTeX and cross-referencing them against the user's verified Skill Vault.
 
 ---
 
-## 🛡️ Hallucination Prevention & Sanitization
+## 💬 Collaborative Refinement Agent
 
-The platform implements several technical guardrails to ensure professional-grade output:
+Post-generation, the user interacts with a **State-Aware Refiner Agent**. This agent inherits the full context of the initial generation and maintains a history of changes while adhering to the same strict validation rules.
 
-1.  **Strict Prompt Engineering**: The generation agent is governed by "Absolute Rules" that prioritize user data over stylistic fluff.
-2.  **LaTeX Sanitization**: A dedicated layer strips out Unicode control characters and invisible tokens that typically crash `pdflatex` or cloud rendering engines.
-3.  **Dynamic Score Breakdown**: Every generated resume receives a Match Score based on:
-    - **Skill Overlap**: Direct technology matches.
-    - **Semantic Alignment**: Relevancy of projects to the JD.
-    - **Keyword Density**: Strategic placement of industry-standard terms.
+```mermaid
+sequenceDiagram
+    participant User
+    participant Refiner as Refinement Agent<br/>(chat_refiner.py)
+    participant Judge as Guardrail Judge<br/>(guardrail_validator.py)
+
+    User->>Refiner: "Emphasize my cloud architecture skills"
+    Note over Refiner: LLM analyzes history +<br/>authorized skill list
+    Refiner->>Refiner: Generates updated LaTeX
+    Refiner->>Judge: validate_resume(new_latex)
+    
+    alt is_valid
+        Judge-->>Refiner: Success
+        Refiner-->>User: "Updated resume with verified cloud metrics."
+    else violation found
+        Judge-->>Refiner: Unauthorized Term Detected
+        Refiner-->>User: "I couldn't add 'AWS' as it's not in your verified profile."
+    end
+```
+
+---
+
+## 🛠️ Integrated Tech Stack
+
+The architecture is split between a **Node.js gateway** for high-concurrency CRUD and a **Python Agent Core** for complex AI logic and PDF rendering.
+
+| Layer | System | Technology |
+|---|---|---|
+| **Experience Layer** | Next.js 14 | Monaco Editor (LaTeX), Live PDF Rendering |
+| **Gateway Layer** | Express.js | JWT Authentication, Mongoose (MongoDB Atlas) |
+| **Agentic Core** | FastAPI / Python | LangChain-style orchestration, SQLAlchemy |
+| **Logic Layer** | OpenAI GPT-4o | Specialized prompts for JSON-structured outputs |
+| **Rendering** | pdflatex | Docker-sandboxed LaTeX compilation |
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Node.js (v18+)
-- MongoDB (Running locally or on Atlas)
-- OpenAI API Key
-
-### Installation
-
-1.  **Clone & Install Core Dependencies**:
+1.  **Clone the Repository**:
     ```bash
-    git clone https://github.com/your-repo/resume-platform.git
-    cd resume-platform
+    git clone <repo_url>
     ```
-
 2.  **Configure Environment**:
-    - Create `backend/.env` (refer to `.env.example`).
-    - Create `frontend/.env` (refer to `.env.example`).
-
-3.  **Start Services**:
-    - **Backend**: `cd backend && npm install && npm run dev`
-    - **Frontend**: `cd frontend && npm install && npm run dev`
-
-4.  **Access App**: Open [http://localhost:3000](http://localhost:3000)
+    - Build `.env` files in `backend/`, `frontend/`, and `python-backend/` (refer to `.env.example`).
+3.  **Run with Docker Compose**:
+    ```bash
+    docker-compose up --build
+    ```
+4.  **Manual Start**:
+    - **Node Backend**: `npm run dev` in `/backend`
+    - **Python Agents**: `uvicorn app.main:app` in `/python-backend`
+    - **Frontend**: `npm run dev` in `/frontend`
 
 ---
-Developed for high-impact resume personalization.
+*Developed for high-integrity career engineering using autonomous agent orchestration.*
