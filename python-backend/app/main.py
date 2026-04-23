@@ -6,7 +6,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
 from app.database import engine, Base
-from app.routers import auth, skills, projects, experiences, achievements, templates, resumes, chat
+from app.routers import auth, skills, projects, experiences, achievements, templates, resumes, chat, agent_traces
 
 # Create rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -51,3 +51,4 @@ app.include_router(achievements.router, prefix="/api/achievements", tags=["Achie
 app.include_router(templates.router, prefix="/api/templates", tags=["Resume Templates"])
 app.include_router(resumes.router, prefix="/api/resumes", tags=["Generated Resumes"])
 app.include_router(chat.router, prefix="/api/chat", tags=["AI Refinement Chat"])
+app.include_router(agent_traces.router, prefix="/api/resumes", tags=["Agent Traces"])
