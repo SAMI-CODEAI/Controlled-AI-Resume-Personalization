@@ -16,3 +16,4 @@ slowapi==0.1.9
 pytest>=8.0.0
 pytest-asyncio>=0.23.4
 langgraph>=0.2.0
+pgvector

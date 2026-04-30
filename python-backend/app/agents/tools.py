@@ -89,6 +89,7 @@ def generate_content_tool(
     domain: str,
     seniority: str,
     repair_feedback: Optional[str] = None,
+    historical_context: Optional[List[str]] = None,
 ) -> Dict[str, str]:
     """
     Tool: Content Writer
@@ -108,6 +109,9 @@ def generate_content_tool(
             + f"\n\nPREVIOUS ATTEMPT FAILED. REPAIR REQUIRED:\n{repair_feedback}\n"
             "Fix ALL issues listed above. Do not repeat the same mistakes."
         )
+        if historical_context:
+            augmented_system += "\n\nHISTORICAL STYLE & METRICS:\n" + "\n".join(historical_context) + "\nIncorporate the exact historical writing style and impact metrics from the text above."
+
         skills_text = ", ".join(matched_skills) if matched_skills else "No matching skills"
         projects_text = ""
         for i, proj in enumerate(ranked_project_data[:5], 1):
@@ -146,6 +150,7 @@ def generate_content_tool(
         experiences=experiences,
         domain=domain,
         seniority=seniority,
+        historical_context=historical_context or [],
     )
 
 

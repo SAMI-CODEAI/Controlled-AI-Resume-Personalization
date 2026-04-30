@@ -75,6 +75,7 @@ def generate_resume_content(
     experiences: List[Experience],
     domain: str,
     seniority: str,
+    historical_context: List[str] = None,
 ) -> Dict[str, str]:
     """
     Generate resume placeholder content using only verified user data.
@@ -106,6 +107,11 @@ def generate_resume_content(
         experiences_text += f"\n- {exp.role} at {exp.company}: {exp.description}"
         if exp.technologies:
             experiences_text += f" (Technologies: {exp.technologies})"
+            
+    historical_text = ""
+    if historical_context:
+        historical_text = "\n\nPAST PORTFOLIO / REVIEW HIGHLIGHTS (Incorporate exactly if relevant to impact numbers):\n"
+        historical_text += "\n".join(f"- {c}" for c in historical_context)
 
     user_prompt = f"""Job Description:
 {job_description}
@@ -120,7 +126,7 @@ VERIFIED PROJECTS (use ONLY these):
 {projects_text}
 
 VERIFIED EXPERIENCES (use ONLY these):
-{experiences_text}
+{experiences_text}{historical_text}
 
 Generate LaTeX content for each placeholder. Remember: use ONLY the data above, do not add anything else."""
 
