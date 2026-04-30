@@ -187,6 +187,19 @@ def content_writer_node(state: ResumeGraphState) -> Dict:
     AGENT = "Content Writer Agent"
     t0, _ = _start_event(AGENT)
     try:
+        from app.database import SessionLocal
+        from app.services.document_service import retrieve_relevant_past_impacts
+        
+        user_id = state.get("user_id") or (state.get("user").id if state.get("user") else None)
+        historical_context = []
+        if user_id:
+            db = SessionLocal()
+            try:
+                search_query = state.get("job_description", "")
+                historical_context = retrieve_relevant_past_impacts(db, user_id, search_query, top_k=3)
+            finally:
+                db.close()
+
         content = generate_content_tool(
             job_description=state["job_description"],
             matched_skills=state.get("matched_skills", []),
@@ -195,6 +208,7 @@ def content_writer_node(state: ResumeGraphState) -> Dict:
             domain=state.get("domain", "software_engineering"),
             seniority=state.get("seniority", "mid"),
             repair_feedback=state.get("repair_feedback"),  # None on first pass
+            historical_context=historical_context,
         )
         filled_latex = fill_template_tool(
             state["template_latex"],

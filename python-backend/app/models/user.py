@@ -23,3 +23,4 @@ class User(Base):
     achievements = relationship("Achievement", back_populates="user", cascade="all, delete-orphan")
     resume_templates = relationship("ResumeTemplate", back_populates="user", cascade="all, delete-orphan")
     generated_resumes = relationship("GeneratedResume", back_populates="user", cascade="all, delete-orphan")
+    documents = relationship("UserDocument", back_populates="user", cascade="all, delete-orphan")

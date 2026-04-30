@@ -1,0 +1,167 @@
+# FAANG-Tier Architecture Upgrade: Detailed Implementation Plan
+
+This document outlines the step-by-step technical implementation required to execute the 6 high-impact architectural upgrades to the Controlled AI Resume Personalization Platform.
+
+---
+
+## 1. RAG for Impact Statements (Vector DB Integration)
+**Goal:** Query past resumes/reviews for exact historical writing style and impact metrics.
+
+### Technical Implementation
+1. **Database:** Use `pgvector` inside your existing Postgres database. It's lightweight and keeps your infrastructure consolidated.
+2. **Setup `pgvector`:**
+   ```sql
+   CREATE EXTENSION IF NOT EXISTS vector;
+   ALTER TABLE experiences ADD COLUMN embedding vector(1536);
+   ```
+3. **Backend Logic (Python):**
+   - Import `langchain-postgres` and `OpenAIEmbeddings`.
+   - When a user creates/updates an `Experience` or uploads older resumes, embed the text descriptions to the DB.
+   ```python
+   from langchain_openai import OpenAIEmbeddings
+   from sqlalchemy import text
+   
+   embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+   vector = embeddings.embed_query("Increased revenue by 14% using Python...")
+   
+   # Save to DB via SQLAlchemy
+   db.execute(text("UPDATE experiences SET embedding = :vec WHERE id = :id"), {"vec": vector, "id": exp.id})
+   ```
+4. **Agent Integration (`Content Writer Node`):**
+   - Before the LLM generates bullets, it executes a cosine similarity search on the user's `experiences` table using the Job Description skills as the query vector.
+   - Inject the top 3 historical bullets into the LLM system prompt as `USER_HISTORICAL_STYLE_CONTEXT`.
+
+---
+
+## 2. Live Agentic Observability Dashboard
+**Goal:** Visualize the LangGraph routing, node latency, and token costs in the React frontend.
+
+### Technical Implementation
+1. **Backend Extension:**
+   - Update [app/routers/agent_traces.py](file:///d:/SAMI/Projects/Controlled%20AI%20Resume%20Personalization%20Platform/python-backend/app/routers/agent_traces.py) to return enhanced data from the [GraphState](file:///d:/SAMI/Projects/Controlled%20AI%20Resume%20Personalization%20Platform/python-backend/app/agents/graph_state.py#89-107) history. Include `duration_ms`, `tokens_used`, and `agent_name` for every cycle.
+2. **Frontend UI (Next.js):**
+   - Create a new route: `/dashboard/traces/[resume_id]`.
+   - Use **Recharts** (or Nivo) to build a scatter plot/latency chart.
+   - Use **React Flow** to build a visual diagram of the nodes. Light up the nodes dynamically based on the returned [agent_trace](file:///d:/SAMI/Projects/Controlled%20AI%20Resume%20Personalization%20Platform/python-backend/app/routers/agent_traces.py#45-101) array.
+   ```tsx
+   // Example React Flow integration
+   import ReactFlow from 'reactflow';
+   import 'reactflow/dist/style.css';
+   
+   // Map your agent_trace array to React Flow nodes/edges
+   const nodes = traceData.map((step, idx) => ({
+     id: String(idx),
+     data: { label: `${step.agent} (${step.duration_ms}ms) - Status: ${step.status}` },
+     position: { x: 250, y: idx * 100 },
+     style: { background: step.status === 'failed' ? '#ffebee' : '#e8f5e9' }
+   }));
+   ```
+
+---
+
+## 3. Real-Time Streaming & WebSocket Integration
+**Goal:** Stream the LaTeX generation token-by-token directly to the frontend Monaco editor.
+
+### Technical Implementation
+1. **Backend Upgrade (FastAPI + Server-Sent Events):**
+   - Switch from standard HTTP rendering to standard SSE using `StreamingResponse` and `langgraph` async streaming.
+   ```python
+   from fastapi.responses import StreamingResponse
+   
+   @router.get("/generate/stream")
+   async def stream_resume_generation(resume_id: str):
+       async def event_generator():
+           async for event in graph.astream_events(initial_state, version="v1"):
+               if event["event"] == "on_chat_model_stream":
+                   chunk = event["data"]["chunk"].content
+                   yield f"data: {chunk}\n\n"
+       return StreamingResponse(event_generator(), media_type="text/event-stream")
+   ```
+2. **Frontend Upgrade (React):**
+   - Consume the SSE stream and append text directly to the Monaco editor state.
+   ```javascript
+   const eventSource = new EventSource(`/api/generate/stream?resume_id=${id}`);
+   eventSource.onmessage = (event) => {
+       setLatex((prev) => prev + event.data);
+   };
+   ```
+
+---
+
+## 4. CI/CD Prompt Evaluation Frameworks
+**Goal:** Programmatically ensure a 0% Hallucination Rate during GitHub PRs.
+
+### Technical Implementation
+1. **Framework:** Install `ragas` or `deepeval` in Python.
+2. **Create Test Suite (`tests/eval_prompts.py`):**
+   - Define a static "Golden User Profile" (e.g., perfectly known skills: Python, AWS) and a "Golden JD" (asking for Python, AWS, Azure, GCP).
+   - Run the graph in headless mode.
+   ```python
+   from deepeval.metrics import HallucinationMetric
+   from deepeval.test_case import LLMTestCase
+   
+   def test_hallucination():
+       # Run your graph
+       latex_output = run_graph_mock()
+       
+       metric = HallucinationMetric(threshold=0.5)
+       test_case = LLMTestCase(
+           input="Generate experience...",
+           actual_output=latex_output,
+           context=["User only knows Python and AWS."]
+       )
+       metric.measure(test_case)
+       assert metric.is_successful() # Fails if Azure/GCP appear
+   ```
+3. **GitHub Actions:**
+   - Create `.github/workflows/evals.yml` that runs the evals on PR creation against a staging LLM api key.
+
+---
+
+## 5. Multi-LLM Routing & Cost Optimization
+**Goal:** Dynamically pick the cheapest LLM that resolves the complexity.
+
+### Technical Implementation
+1. **Semantic Router:**
+   - Instead of hardcoding `ChatOpenAI(model="gpt-4o")` in [tools.py](file:///d:/SAMI/Projects/Controlled%20AI%20Resume%20Personalization%20Platform/python-backend/app/agents/tools.py), create an LLM factory wrapper.
+   ```python
+   from langchain_openai import ChatOpenAI
+   from langchain_anthropic import ChatAnthropic
+   
+   def get_optimal_llm(task_complexity: str):
+       if task_complexity == "HIGH": 
+           # Reflection, Content Writer
+           return ChatAnthropic(model="claude-3-5-sonnet-20240620")
+       elif task_complexity == "LOW":
+           # JD Analyser, simple boolean checks
+           return ChatOpenAI(model="gpt-4o-mini") 
+   ```
+2. **Inject into Nodes:** Update [nodes.py](file:///d:/SAMI/Projects/Controlled%20AI%20Resume%20Personalization%20Platform/python-backend/app/agents/nodes.py) to fetch `get_optimal_llm(...)` at the execution block rather than globally.
+
+---
+
+## 6. Chrome Extension Webhook (Auto-Apply)
+**Goal:** Highlight JD text on LinkedIn -> Click Extension -> Webhook -> Auto Generate PDF.
+
+### Technical Implementation
+1. **Chrome Extension (Vite/React):**
+   - Create a `manifest.json` (V3).
+   - Use `chrome.scripting.executeScript` to extract `document.body.innerText` from the LinkedIn Job posting.
+   ```javascript
+   // background.js
+   chrome.action.onClicked.addListener(async (tab) => {
+     chrome.scripting.executeScript({
+       target: { tabId: tab.id },
+       function: () => {
+          const jdText = document.querySelector('.jobs-description__container').innerText;
+          fetch('https://your-api.com/api/resumes/webhook/auto-generate', {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": "Bearer USER_TOKEN" },
+              body: JSON.stringify({ job_description: jdText })
+          });
+       }
+     });
+   });
+   ```
+2. **Backend Webhook Endpoint:**
+   - Build an endpoint taking raw text, mapping it to the default Resume Template for that user, and executing the LangGraph in a background task (`BackgroundTasks` in FastAPI), emailing the user the PDF when done.
