@@ -1,0 +1,120 @@
+{
+  "user_id": "262fb205-2c4d-41e3-84a4-b7f5395ce1fb",
+  "resume_id": "2b56c0d5-d91e-45d3-92ae-cbe77b4edd8e",
+  "generated_at": "2026-06-12T19:24:44.069619",
+  "trace": [
+    {
+      "agent": "JD Analyst Agent",
+      "status": "completed",
+      "duration_ms": 2437,
+      "details": "Domain=Web Development, Seniority=Mid-Level, Keywords=3",
+      "errors": []
+    },
+    {
+      "agent": "Skill Matcher Agent",
+      "status": "completed",
+      "duration_ms": 16,
+      "details": "Matched=1, Missing=1, RequiredMatchPct=50.0%",
+      "errors": []
+    },
+    {
+      "agent": "Project Ranker Agent",
+      "status": "completed",
+      "duration_ms": 0,
+      "details": "Ranked 2 projects, top-5 selected. Top score=0.00",
+      "errors": []
+    },
+    {
+      "agent": "Content Writer Agent",
+      "status": "completed",
+      "duration_ms": 5812,
+      "details": "Generated sections: ['summary', 'skills', 'projects', 'experiences']. LaTeX length=1322 chars. (Initial pass)",
+      "errors": []
+    },
+    {
+      "agent": "LaTeX Critic Agent",
+      "status": "completed",
+      "duration_ms": 0,
+      "details": "PASS \u2014 All 4 sections structurally valid.",
+      "errors": []
+    },
+    {
+      "agent": "Guardrail Critic Agent",
+      "status": "failed",
+      "duration_ms": 0,
+      "details": "FAIL \u2014 1 violation(s): ['your name']",
+      "errors": [
+        "your name"
+      ]
+    },
+    {
+      "agent": "Repair Agent",
+      "status": "completed",
+      "duration_ms": 0,
+      "details": "Attempt #1. Feedback prepared: 1 issue category(ies).",
+      "errors": []
+    },
+    {
+      "agent": "Content Writer Agent",
+      "status": "completed",
+      "duration_ms": 4858,
+      "details": "Generated sections: ['summary', 'skills', 'projects']. LaTeX length=1281 chars. (Repair pass)",
+      "errors": []
+    },
+    {
+      "agent": "LaTeX Critic Agent",
+      "status": "completed",
+      "duration_ms": 0,
+      "details": "PASS \u2014 All 4 sections structurally valid.",
+      "errors": []
+    },
+    {
+      "agent": "Guardrail Critic Agent",
+      "status": "failed",
+      "duration_ms": 0,
+      "details": "FAIL \u2014 2 violation(s): ['your name', 'agentic\\textunderscore engineering\\textunderscore team']",
+      "errors": [
+        "your name",
+        "agentic\textunderscore engineering\textunderscore team"
+      ]
+    },
+    {
+      "agent": "Repair Agent",
+      "status": "completed",
+      "duration_ms": 0,
+      "details": "Attempt #2. Feedback prepared: 1 issue category(ies).",
+      "errors": []
+    },
+    {
+      "agent": "Content Writer Agent",
+      "status": "completed",
+      "duration_ms": 6328,
+      "details": "Generated sections: ['summary', 'skills', 'projects', 'experiences']. LaTeX length=1224 chars. (Repair pass)",
+      "errors": []
+    },
+    {
+      "agent": "LaTeX Critic Agent",
+      "status": "completed",
+      "duration_ms": 0,
+      "details": "PASS \u2014 All 4 sections structurally valid.",
+      "errors": []
+    },
+    {
+      "agent": "Guardrail Critic Agent",
+      "status": "failed",
+      "duration_ms": 0,
+      "details": "FAIL \u2014 2 violation(s): ['your name', 'agentic ai multiagent orchestration:']",
+      "errors": [
+        "your name",
+        "agentic ai multiagent orchestration:"
+      ]
+    },
+    {
+      "agent": "Repair Agent",
+      "status": "completed",
+      "duration_ms": 0,
+      "details": "Attempt #3. Feedback prepared: 1 issue category(ies).",
+      "errors": []
+    }
+  ]
+}

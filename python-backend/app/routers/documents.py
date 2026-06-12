@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.auth.dependencies import get_current_user
+from app.auth.auth import get_current_user
 from app.models.user import User
 from app.services.document_service import ingest_user_document
 from pydantic import BaseModel

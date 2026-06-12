@@ -6,7 +6,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
 from app.database import engine, Base
-from app.routers import auth, skills, projects, experiences, achievements, templates, resumes, chat, agent_traces, documents
+from app.routers import auth, skills, projects, experiences, achievements, templates, resumes, chat, agent_traces, documents, compile
 
 # Create rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -43,13 +43,14 @@ async def health_check():
 
 
 # Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(skills.router, prefix="/api/skills", tags=["Skills"])
-app.include_router(projects.router, prefix="/api/projects", tags=["Projects"])
-app.include_router(experiences.router, prefix="/api/experiences", tags=["Experiences"])
-app.include_router(achievements.router, prefix="/api/achievements", tags=["Achievements"])
-app.include_router(templates.router, prefix="/api/templates", tags=["Resume Templates"])
-app.include_router(resumes.router, prefix="/api/resumes", tags=["Generated Resumes"])
-app.include_router(chat.router, prefix="/api/chat", tags=["AI Refinement Chat"])
-app.include_router(agent_traces.router, prefix="/api/resumes", tags=["Agent Traces"])
-app.include_router(documents.router, prefix="/api/documents", tags=["User Reference Documents"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(skills.router, prefix="/api/v1/skills", tags=["Skills"])
+app.include_router(projects.router, prefix="/api/v1/projects", tags=["Projects"])
+app.include_router(experiences.router, prefix="/api/v1/experiences", tags=["Experiences"])
+app.include_router(achievements.router, prefix="/api/v1/achievements", tags=["Achievements"])
+app.include_router(templates.router, prefix="/api/v1/templates", tags=["Resume Templates"])
+app.include_router(resumes.router, prefix="/api/v1/resumes", tags=["Generated Resumes"])
+app.include_router(chat.router, prefix="/api/v1/chat", tags=["AI Refinement Chat"])
+app.include_router(agent_traces.router, prefix="/api/v1/resumes", tags=["Agent Traces"])
+app.include_router(documents.router, prefix="/api/v1/documents", tags=["User Reference Documents"])
+app.include_router(compile.router, prefix="/api/v1/compile", tags=["LaTeX Compilation"])
