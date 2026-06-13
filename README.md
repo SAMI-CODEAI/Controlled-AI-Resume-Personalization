@@ -134,11 +134,13 @@ On completion, this log persists into `GeneratedResume.metadata_json`, providing
 
 | Component | Stack |
 | :--- | :--- |
-| **Agentic Framework** | `LangGraph`, `LangChain-Core` |
+| **Frontend UI** | `Next.js 14`, `React 18`, `TypeScript`, `Tailwind CSS`, `Monaco Editor` |
+| **Backend Service** | `FastAPI`, `Uvicorn`, `Python`, `SlowAPI` (Rate Limiting) |
+| **Database & ORM** | `PostgreSQL` (w/ `pgvector`), SQLite (local fallback), `SQLAlchemy`, `Alembic` |
+| **Agentic Framework** | `LangGraph` |
 | **Core LLM** | OpenAI `GPT-4o` (or local `Ollama` capabilities) |
-| **Backend Service** | `FastAPI` (Python 3.9), `SQLAlchemy`, `PostgreSQL` |
-| **Frontend UI** | `Next.js 14`, `React`, MERN ecosystem foundations. |
-| **Compilation Engine** | Isolated `pdflatex` rendering system |
+| **Compilation Engine** | Isolated `pdflatex` compilation engine |
+| **Authentication** | JWT (`python-jose`), `bcrypt` |
 
 ## 🚀 Getting Started
 
