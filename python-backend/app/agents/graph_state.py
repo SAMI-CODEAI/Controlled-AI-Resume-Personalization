@@ -90,7 +90,7 @@ class ChatGraphState(TypedDict, total=False):
     # --- Inputs ---
     message: str
     current_latex: str
-    authorized_skills: List[str]
+    authorized_terms: List[str]
     chat_history: List[Dict[str, str]]   # [{role, content}, ...]
 
     # --- Set by Chat Refiner Agent ---

@@ -29,8 +29,8 @@ When making changes, return your response as JSON:
   "changes_made": true/false
 }
 
-AUTHORIZED SKILLS (only these may appear in the resume):
-{authorized_skills}
+AUTHORIZED TERMS (names, companies, and projects; only these may appear in the resume):
+{authorized_terms}
 
 Current resume LaTeX:
 {current_latex}"""
@@ -61,7 +61,7 @@ def clean_llm_json(text: str) -> str:
 def refine_resume(
     message: str,
     current_latex: str,
-    authorized_skills: List[str],
+    authorized_terms: List[str],
     chat_history: List[Dict[str, str]],
 ) -> Tuple[str, Optional[str], bool, List[str]]:
     """
@@ -70,13 +70,13 @@ def refine_resume(
     Args:
         message: User's refinement request
         current_latex: Current LaTeX content of the resume
-        authorized_skills: List of user's verified skills
+        authorized_terms: List of all allowed entities (full name, company names, project titles, skills)
         chat_history: Previous chat messages
 
     Returns:
         Tuple of (reply_text, updated_latex_or_none, validation_passed, validation_errors)
     """
-    system_prompt = REFINEMENT_SYSTEM_PROMPT.replace("{authorized_skills}", ", ".join(authorized_skills))
+    system_prompt = REFINEMENT_SYSTEM_PROMPT.replace("{authorized_terms}", ", ".join(authorized_terms))
     system_prompt = system_prompt.replace("{current_latex}", current_latex[:3000])
 
     # Build messages including history
@@ -107,11 +107,11 @@ def refine_resume(
     validation_passed = True
 
     if updated_latex and changes_made:
-        is_valid, violations = validate_resume(updated_latex, authorized_skills, strict=True)
+        is_valid, violations = validate_resume(updated_latex, authorized_terms, strict=True)
         if not is_valid:
             validation_passed = False
             validation_errors = violations
-            reply += f"\n\n⚠️ WARNING: The changes were rejected because they contain unauthorized skills: {', '.join(violations)}. The resume was not updated."
+            reply += f"\n\n⚠️ WARNING: The changes were rejected because they contain unauthorized entities: {', '.join(violations)}. The resume was not updated."
             updated_latex = None  # Reject the update
 
     return reply, updated_latex, validation_passed, validation_errors

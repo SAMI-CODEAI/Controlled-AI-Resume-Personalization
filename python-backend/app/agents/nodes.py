@@ -375,7 +375,7 @@ def chat_refiner_node(state: ChatGraphState) -> Dict:
         reply, updated_latex, validation_passed, validation_errors = refine_resume(
             message=state["message"],
             current_latex=state["current_latex"],
-            authorized_skills=state.get("authorized_skills", []),
+            authorized_terms=state.get("authorized_terms", []),
             chat_history=state.get("chat_history", []),
         )
         duration_ms = int((time.monotonic() - t0) * 1000)
@@ -416,7 +416,7 @@ def chat_critic_node(state: ChatGraphState) -> Dict:
         logger.info(f"[{AGENT}] No update to validate — skipping.")
         return {"validation_passed": True, "validation_errors": []}
 
-    authorized = state.get("authorized_skills", [])
+    authorized = state.get("authorized_terms", [])
     is_valid, violations = validate_guardrails_tool(updated_latex, authorized, strict=True)
     duration_ms = int((time.monotonic() - t0) * 1000)
     logger.info(f"[{AGENT}] Completed in {duration_ms}ms. Valid={is_valid}, Violations={violations}")

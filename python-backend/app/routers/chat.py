@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.models.skill import Skill
+from app.models.project import Project
+from app.models.experience import Experience
 from app.models.generated_resume import GeneratedResume
 from app.schemas.schemas import ChatRequest, ChatResponse
 from app.auth.auth import get_current_user
@@ -41,14 +43,21 @@ def refine(
         raise HTTPException(status_code=404, detail="Resume not found")
 
     user_skills = db.query(Skill).filter(Skill.user_id == current_user.id).all()
-    authorized_skills = [s.name for s in user_skills]
+    user_projects = db.query(Project).filter(Project.user_id == current_user.id).all()
+    user_experiences = db.query(Experience).filter(Experience.user_id == current_user.id).all()
+
+    authorized_terms = [s.name for s in user_skills]
+    authorized_terms.extend([p.title for p in user_projects])
+    authorized_terms.extend([e.company for e in user_experiences])
+    authorized_terms.append(current_user.full_name)
+    
     chat_history = [{"role": m.role, "content": m.content} for m in payload.history]
 
     # Build initial ChatGraphState
     initial_state = {
         "message": payload.message,
         "current_latex": resume.latex_output,
-        "authorized_skills": authorized_skills,
+        "authorized_terms": authorized_terms,
         "chat_history": chat_history,
         "refinement_attempts": 0,
     }

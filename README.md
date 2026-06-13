@@ -166,6 +166,18 @@ The following metrics represent the operational efficiency and accuracy of our a
 | **Token Efficiency** | < 15k | **12.4k** | Average tokens per high-integrity generation |
 | **API Availability** | > 99.9% | **99.98%** | Uptime across deployed microservices |
 
+### 🔍 Metric Definitions & Rationale
+We track these specific KPIs to ensure the platform maintains "high-integrity" standards required for professional recruitment:
+
+- **Generation Latency (`< 45s`):** Measures end-to-end responsiveness. Crucial for a premium user experience in asynchronous environments.
+- **Parsing Accuracy (`> 95%`):** Ensures that the user's professional history is ingested without data loss or structural errors across diverse file formats.
+- **Hallucination Rate (`< 1%`):** The primary measure of truthfulness. Lower is better, ensuring the AI never "invents" skills or experiences.
+- **ATS Score Alignment (`> 85%`):** Validates that our scoring engine mimics senior recruiter judgment, providing trustworthy feedback to users.
+- **Self-Healing Rate (`> 90%`):** Demonstrates the reliability of our multi-agent feedback loop in correcting syntax or logic errors without user intervention.
+- **Project Relevance (`> 90%`):** Confirms the effectiveness of the project selection algorithm in matching the most impactful past work to the JD.
+- **Token Efficiency (`< 15k`):** Tracks operational cost and model throughput. High efficiency ensures lower overhead and faster processing.
+- **API Availability (`> 99.9%`):** Standard industry SLA tracking to ensure the platform is always ready for enterprise-scale demand.
+
 ---
 
 ## 🚀 Getting Started
