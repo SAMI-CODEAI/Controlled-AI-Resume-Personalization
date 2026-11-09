@@ -1,5 +1,4 @@
 # 🚀 Controlled AI Resume Personalization Platform
-> **A FAANG-Grade Multi-Agent Orchestration System for High-Integrity Resume Engineering**
 
 The **Controlled AI Resume Personalization Platform** is a sophisticated **Agentic System** that leverages **LangGraph** to solve structural fragility and the "hallucination problem" inherent in LLM-generated documents. 
 
